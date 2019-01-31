@@ -379,7 +379,7 @@ map_unity_ram(vm_t* vm)
         err = vka_cspace_alloc_path(vm->vka, &frame);
         assert(!err);
         seL4_Word cookie;
-        err = vka_utspace_alloc_at(vm->vka, &frame, kobject_get_type(KOBJECT_FRAME, bits), bits, start, &cookie);
+        err = vka_alloc_object_at_maybe_dev(vm->vka, kobject_get_type(KOBJECT_FRAME, bits), bits, start, true, &frame);
         if (err) {
             printf("Failed to map ram page 0x%x\n", start);
             vka_cspace_free(vm->vka, frame.capPtr);
@@ -519,10 +519,12 @@ route_irqs(vm_t* vm, irq_server_t irq_server)
         }
         irq_data = irq_server_register_irq(irq_server, irq, handler, NULL);
         if (!irq_data) {
+            ZF_LOGE("Failed to register irq");
             return -1;
         }
         virq = vm_virq_new(vm, irq, &do_irq_server_ack, irq_data);
         if (virq == NULL) {
+            ZF_LOGE("Failed to set virq");
             return -1;
         }
         irq_data->token = (void*)virq;
@@ -609,12 +611,13 @@ load_linux(vm_t* vm, const char* kernel_name, const char* dtb_name)
     /* Install devices */
     err = install_linux_devices(vm);
     if (err) {
-        printf("Error: Failed to install Linux devices\n");
+        ZF_LOGE("Error: Failed to install Linux devices");
         return -1;
     }
     /* Route IRQs */
     err = route_irqs(vm, _irq_server);
     if (err) {
+        ZF_LOGE("Failed to route IRQs");
         return -1;
     }
     /* Load kernel */
@@ -631,7 +634,7 @@ load_linux(vm_t* vm, const char* kernel_name, const char* dtb_name)
     /* Set boot arguments */
     err = vm_set_bootargs(vm, entry, MACH_TYPE, (uint32_t) dtb);
     if (err) {
-        printf("Error: Failed to set boot arguments\n");
+        ZF_LOGE("Error: Failed to set boot arguments");
         return -1;
     }
 
@@ -687,7 +690,7 @@ main_continued(void)
     }
 #endif /* CONFIG_ARM_SMMU */
 
-#ifdef CONFIG_PLAT_EXYNOS5410
+#ifdef CONFIG_PLAT_EXYNOS5
     /* HACK: See if we have a "RAM device" for 1-1 mappings */
     map_unity_ram(&vm);
 #endif /* CONFIG_PLAT_EXYNOS5410 */
