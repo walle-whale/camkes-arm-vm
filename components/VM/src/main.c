@@ -1090,6 +1090,7 @@ int main_continued(void)
 
     int vm_exit_reason;
     while (1) {
+        printf("running vm...\n");
         err = vm_run(&vm);
         if (err) {
             ZF_LOGE("Failed to run VM");

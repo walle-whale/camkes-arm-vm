@@ -135,6 +135,7 @@ iw wlan0 link
 dhclient wlan0
 ```
 
+
 ### TK1 Build Notes
  The default setup does not pass though many devices to the Linux kernel. If you `make menuconfig` you can set `insecure` mode in the `Applications` submenu; this is meant to pass through all devices, but not
 everything has been tested and confirmed to work yet. In particular, the SMMU needs to have extra entries added for any DMA-capable devices such as SATA.
@@ -166,3 +167,46 @@ In addition, when initialising your build, ensure the `KernelMaxNumNodes` config
 ../init-build.sh -DCAMKES_VM_APP=vm_minimal -DPLATFORM=tx2 -DNUM_NODES=4
 ```
 *Note: ensure your platform supports SMP configurations through the above feature matrix*
+
+## zynqmp configuration
+
+One linux binary is provided, built from petalinux 2017.3. Only the secondary serial port is passed
+though to the VM.
+
+### building a new linux image
+
+These instructions assume the user has installed petalinux.
+
+NOTE: Petalinux 2017.4 can cause issues.
+
+First, create a new project using the petalinux BSP:
+
+```
+cd ~
+petalinux-create -t project -s xilinx-zcu102-v2017.3-final.bsp
+cd xilinx-zcu102-2017.3
+```
+
+Next, modify the project so that Linux will start a getty for either serial device. Add the
+following to `project-spec/meta-user/conf/layer.conf`:
+
+```
+require conf/distro/include/console.inc
+```
+
+Now, create the file `project-spec/meta-user/conf/distro/include/console.inc` with the following
+line:
+
+```
+SERIAL_CONSOLES_append = " 115200;ttyPS1"
+```
+
+Now call `petalinux-build` to compile the image. The Linux image should exist in `images/linux/Image`.
+
+At this point, petalinux can be used to add additional modules and other pieces to Linux.
+
+### initializing
+
+```
+../init-build.sh -DCAMKES_VM_APP=vm_minimal -DPLATFORM=zynqmp -DCROSS_COMPILER_PREFIX=aarch64-linux-gnu- -DAARCH64=true
+```

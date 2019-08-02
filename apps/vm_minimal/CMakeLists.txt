@@ -112,6 +112,20 @@ elseif("${KernelARMPlatform}" STREQUAL "qemu-arm-virt")
     if(SIMULATION)
         GenerateSimulateScript()
     endif()
+elseif("${KernelARMPlatform}" STREQUAL "zynqmp")
+    AddToFileServer("linux" "${CAMKES_VM_IMAGES_DIR}/zynqmp/linux")
+
+    set(device_tree_src "${CAMKES_VM_IMAGES_DIR}/zynqmp/linux.dts")
+
+    add_custom_command(
+        OUTPUT linux/linux-dtb
+        COMMAND
+            bash -c "which dtc && dtc -I dts -O dtb ${device_tree_src} > ${CMAKE_CURRENT_BINARY_DIR}/linux/linux-dtb"
+        VERBATIM
+    )
+    # Create custom target for setting the dtb
+    add_custom_target(set_dtb DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/linux/linux-dtb")
+    AddToFileServer("linux-dtb" "${CMAKE_CURRENT_BINARY_DIR}/linux/linux-dtb" DEPENDS set_dtb)
 endif()
 
 AddCamkesCPPFlag(cpp_flags CONFIG_VARS VmEmmc2NoDMA VmVUSB Tk1DeviceFwd Tk1Insecure)
