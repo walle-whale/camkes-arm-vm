@@ -613,7 +613,7 @@ int install_linux_devices(vm_t *vm)
         err = vm_install_vpci(vm, io_ports, pci);
         assert(!err);
     }
-    if (config_set(CONFIG_PLAT_EXYNOS5) || config_set(CONFIG_PLAT_QEMU_ARM_VIRT) || config_set(CONFIG_PLAT_TX2)) {
+    if (config_set(CONFIG_PLAT_EXYNOS5) || config_set(CONFIG_PLAT_QEMU_ARM_VIRT) || config_set(CONFIG_PLAT_TX2) || config_set(CONFIG_PLAT_ZYNQMP)) {
         err = vm_ram_register_at(vm, linux_ram_base, linux_ram_size, true);
     } else {
         err = vm_ram_register_at(vm, linux_ram_base, linux_ram_size, false);
